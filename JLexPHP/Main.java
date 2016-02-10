@@ -183,6 +183,7 @@ import java.util.Enumeration;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.Iterator;
 
 /******************************
   Questions:
@@ -329,6 +330,8 @@ class CSpec
     'o', 'k', 'e',
     'n'
     };
+	
+  Vector m_ctor_args;
 
   /* Lexical Generator. */
   private CLexGen m_lexGen;
@@ -416,6 +419,8 @@ class CSpec
 	m_state_dtrans = null;
 
 	m_state_rules = null;
+	
+	m_ctor_args = new Vector();
       }
 }
 
@@ -769,8 +774,18 @@ class CEmit
 //          m_outstream.print(new String(m_spec.m_class_name));
 //	  m_outstream.print(" ()");
 
-	m_outstream.print("\tfunction __construct($stream)");
+	m_outstream.print("\tfunction __construct($stream");
 
+	for(Iterator i = m_spec.m_ctor_args.iterator(); i.hasNext();)
+	{
+		char[] ctorarg = (char[])i.next();
+		
+		m_outstream.print(", ");
+		m_outstream.print("$");
+		m_outstream.print(ctorarg);
+	}
+	m_outstream.print(")");
+	
 	  if (null != m_spec.m_init_throw_code)
 	    {
 	      m_outstream.println(); 
@@ -5313,6 +5328,13 @@ class CLexGen
     '\0'
     };
 
+  private char m_ctorarg_dir[] = { 
+    '%', 'c', 't', 
+    'o', 'r', 'a', 
+	'r', 'g',
+    '\0'
+    };
+
   private char m_implements_dir[] = { 
     '%', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 's', 
     '\0'
@@ -5588,6 +5610,16 @@ class CLexGen
 			{
 			  m_input.m_line_index = m_class_dir.length;
 			  m_spec.m_class_name = getName();
+			  break;
+			}
+		      else if (0 == CUtility.charncmp(m_input.m_line,
+						      0,
+						      m_ctorarg_dir, 
+						      0,
+						      m_ctorarg_dir.length - 1))
+			{
+			  m_input.m_line_index = m_ctorarg_dir.length;
+			  m_spec.m_ctor_args.add(getName());
 			  break;
 			}
 		      else if (0 == CUtility.charncmp(m_input.m_line,
